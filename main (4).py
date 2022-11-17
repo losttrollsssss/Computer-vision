@@ -1,38 +1,37 @@
 import numpy as np
+from scipy.ndimage import binary_erosion
 import matplotlib.pyplot as plt
-# pip install scikit-image
-from skimage.measure import regionprops, label
+from skimage.measure import label
 
-def count_lakes_and_bays(region):
-  symbol = ~region.image
-  lb = label(symbol)
-  lakes = 0
-  bays = 0
-  for reg in regionprops(lb):
-    for y, x in reg.coords:
-      if (y == 0 or x == 0 or y == region.image.shape[0]-1
-          or x == region.image.shape[1]-1):
-          bays += 1
-      else:
-          lakes += 1
-          break     
-  return lakes, bays
-  
-def recognize(im_region):
-  return None
-  
-im = plt.imread("alphabet.png")
-im = np.mean(im, 2)
-im[im > 0] = 1
+img = np.load('C:\\Users\ilyag\Downloads\stars.npy')
 
-lb = label(im)
-regions = regionprops(lb)
-for reg in regions:
-  lakes, _ = count_lakes_and_bays(reg)
-  if lakes == 2:
-      plt.figure()
-      plt.imshow(reg.image)
-#print(recognize(regions[50]))
+mask_pl= np.array([[0,0,1,0,0],
+                    [0,0,1,0,0],
+                    [1,1,1,1,1],
+                    [0,0,1,0,0],
+                    [0,0,1,0,0]])
 
-#plt.imshow(regions[50].image)
+mask_cross=np.array([[1,0,0,0,1],
+                    [0,1,0,1,0],
+                    [0,0,1,0,0],
+                    [0,1,0,1,0],
+                    [1,0,0,0,1]])
+
+labeled4=label(img, connectivity=1)
+print(f"Objects = {np.max(labeled4)}")
+labeled8=label(img, connectivity=2)
+print(f"Objects = {np.max(labeled8)}")
+
+pluses=binary_erosion(img, mask_pl)
+labeled=label(pluses)
+print(f"Pluses count = {labeled.max()}")
+
+crosses=binary_erosion(img, mask_cross)
+labeled=label(crosses)
+print(f"Crosses count = {labeled.max()}")
+
+plt.subplot(121)
+plt.imshow(img)
+plt.subplot(122)
+plt.imshow(labeled8)
 plt.show()
