@@ -1,28 +1,62 @@
-import numpy as np
 import matplotlib.pyplot as plt
-# pip install scikit-image
-from skimage.measure import regionprops, label
-from skimage.filters.thresholding import (threshold_li, threshold_otsu, threshold_local, threshold_yen, gaussian)
+import numpy as np
+from scipy.ndimage import morphology
 
-image = plt.imread("coins.jpg")
-gray = np.mean(image, 2).astype("int")
-g = gaussian(gray, 201)
-gray = gray / g
+mask1=np.array ([
+    [1,1,1,1,1,1],
+    [1,1,1,1,1,1],
+    [1,1,1,1,1,1],
+    [1,1,1,1,1,1]
+    ])
 
-th1 = threshold_local(gray, 101)
-th2 = threshold_otsu(gray)
-th3 = threshold_li(gray)
-th4 = threshold_yen(gray)
-plt.subplot(221)
-plt.title("Local")
-plt.imshow(gray > th1)
-plt.subplot(222)
-plt.title("Otsu")
-plt.imshow(gray > th2)
-plt.subplot(223)
-plt.title("Li")
-plt.imshow(gray > th3)
-plt.subplot(224)
-plt.title("Yen")
-plt.imshow(gray > th4)
+mask2=np.array ([
+    [1,1,1,1],
+    [1,1,1,1],
+    [1,1,0,0],
+    [1,1,0,0],
+    [1,1,1,1],
+    [1,1,1,1]
+    ])
+
+mask3=np.array ([
+    [1,1,1,1],
+    [1,1,1,1],
+    [0,0,1,1],
+    [0,0,1,1],
+    [1,1,1,1],
+    [1,1,1,1]
+    ])
+
+mask4=np.array ([
+    [1,1,0,0,1,1],
+    [1,1,0,0,1,1],
+    [1,1,1,1,1,1],
+    [1,1,1,1,1,1]
+    ])
+
+mask5=np.array ([
+    [1,1,1,1,1,1],
+    [1,1,1,1,1,1],
+    [1,1,0,0,1,1],
+    [1,1,0,0,1,1]
+    ])
+
+img = np.load('C:\\ps.npy.txt')
+
+f1= morphology.binary_hit_or_miss(img, mask1)
+f2= morphology.binary_hit_or_miss(img, mask2)
+f3= morphology.binary_hit_or_miss(img, mask3)
+f4= morphology.binary_hit_or_miss(img, mask4)
+f5= morphology.binary_hit_or_miss(img, mask5)
+
+print('Type 1: ', np.sum(f1))
+print('Type 2: ', np.sum(f2))
+print('Type 3: ', np.sum(f3))
+print('Type 4: ', np.sum(f4))
+print('Type 5: ', np.sum(f5))
+print('All obj: ', np.sum([f1,f2,f3,f4,f5]))
+
+plt.figure()
+plt.subplot(121)
+plt.imshow(img)
 plt.show()
