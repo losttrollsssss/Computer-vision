@@ -29,7 +29,7 @@ def check_for_win(array, sequence):
             print("You win! Your sequence:", color[array[x - 3][0]], color[array[x - 2][0]], color[array[x - 1][0]],
                   "Expected:", color[sequence[0]], color[sequence[1]], color[sequence[2]])
             global win
-            win = True  # yeah I know it's bad but doesn't seem really matter rn
+            win = True
 
 def compare(ball):
     return ball[1]
@@ -70,7 +70,6 @@ while cam.isOpened():
             [curr_x, curr_y], radius = cv2.minEnclosingCircle(c)
             if (radius > 10):
                 cv2.circle(image, (int(curr_x), int(curr_y)), 5, (0, 255, 255,), 2)
-                #cv2.circle(image, (int(curr_x), int(curr_y)), int(radius), (0, 255, 255,), 2)
                 user.append([i, curr_x])
         if (len(user) == 3):
             user = sorted(user, key=compare)
