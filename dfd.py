@@ -1,97 +1,123 @@
+from time import sleep
+
 import cv2
 import numpy as np
-from random import randint
+import random
 
-win = False
+ballBlue = [98, 232, 120]
+lower = np.array([ballBlue[0] - 15, ballBlue[1] - 50, 0])
+higher = np.array([ballBlue[0] + 15, ballBlue[1] + 50, 255])
 
-def on_mouse_click(event, x, y, flags, param):
-    if event == cv2.EVENT_LBUTTONDOWN:
-        global position
-        print(position)
-        position = [y, x]
+ballRed = [180, 230, 178]
+lower1 = np.array([ballRed[0] - 15, ballRed[1] - 15, 0])
+higher1 = np.array([ballRed[0] + 15, ballRed[1] + 15, 255])
 
-def make_random_sequence():
-    ar = [randint(0, 2), randint(0, 1), 3]
-    if (ar[1] > 0):
-        ar[1] = (ar[0] + 1) % 3
-    else:
-        ar[1] = (ar[0] - 1) % 3
-    ar[2] = ar[2] - ar[1] - ar[0]
-    return ar
-
-def check_for_win(array, sequence):
-    x = len(array)
-    if (x > 2):
-        if (array[x - 1][0] == sequence[2] and
-            array[x - 2][0] == sequence[1] and
-            array[x - 3][0] == sequence[0]):
-            color = ["YELLOW", "ORANGE", "RED"]
-            print("You win! Your sequence:", color[array[x - 3][0]], color[array[x - 2][0]], color[array[x - 1][0]],
-                  "Expected:", color[sequence[0]], color[sequence[1]], color[sequence[2]])
-            global win
-            win = True
-
-def compare(ball):
-    return ball[1]
-
+ballGreen = [63, 132, 170]
+lower2 = np.array([ballGreen[0] - 15, ballGreen[1] - 15, 0])
+higher2 = np.array([ballGreen[0] + 15, ballGreen[1] + 15, 255])
 
 cam = cv2.VideoCapture(0)
+cam.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+
 cv2.namedWindow("Camera", cv2.WINDOW_KEEPRATIO)
-cv2.setMouseCallback("Camera", on_mouse_click)
-position = []
-measures = []
-bgr_color = []
-hsv_color = []
 
-yellow_lower_HSV = np.array([23, 52, 106])
-yellow_upper_HSV = np.array([30, 255, 215])
-orange_lower_HSV = np.array([3, 80, 176])
-orange_upper_HSV = np.array([5, 255, 250])
-red_lower_HSV = np.array([0, 52, 76])
-red_upper_HSV = np.array([0, 255, 255])
 
-sequence = make_random_sequence()
+def createMask(lower, higher):
+    mask1 = cv2.inRange(hsv, lower, higher)
+    mask1 = cv2.erode(mask1, None, iterations=2)
+    mask1 = cv2.dilate(mask1, None, iterations=2)
+    return mask1
 
+
+rgbComp = []
+randNum = [1, 2, 3]
+rgbComp.append(random.choice(randNum))
+randNum.remove(rgbComp[0])
+rgbComp.append(random.choice(randNum))
+randNum.remove(rgbComp[1])
+rgbComp.append(random.choice(randNum))
+rggb = {}
+rggb = {3: "red", 2: "green", 1: "blue"}
+
+r = 3
+g = 2
+b = 1
 while cam.isOpened():
-    _, image = cam.read()
-    blurred = cv2.GaussianBlur(image, (11, 11), 0)
-    hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
-    masks = [cv2.inRange(hsv, yellow_lower_HSV, yellow_upper_HSV), 
-             cv2.inRange(hsv, orange_lower_HSV, orange_upper_HSV),
-             cv2.inRange(hsv, red_lower_HSV, red_upper_HSV)]
-    cntss = []
-    user = []
-    for i in range(len(masks)):
-        masks[i] = cv2.erode(masks[i], None, iterations=2)
-        masks[i] = cv2.dilate(masks[i], None, iterations=2)
-        cntss.append(cv2.findContours(masks[i].copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2])
-        if (len(cntss[i]) > 0):
-            c = max(cntss[i], key=cv2.contourArea)
-            [curr_x, curr_y], radius = cv2.minEnclosingCircle(c)
-            if (radius > 10):
-                cv2.circle(image, (int(curr_x), int(curr_y)), 5, (0, 255, 255,), 2)
-                user.append([i, curr_x])
-        if (len(user) == 3):
-            user = sorted(user, key=compare)
-            if (win == False):
-                check_for_win(user, sequence)
+    ret, frame = cam.read()
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    if position:
-        pxl = image[position[0], position[1]]
-        measures.append(pxl)
-        if len(measures) >= 10:
-            bgr_color = np.uint8([[np.average(measures, 0)]])
-            hsv_color = cv2.cvtColor(bgr_color, cv2.COLOR_BGR2HSV)
-            bgr_color = bgr_color[0, 0]
-            hsv_color = hsv_color[0, 0]
-            measures.clear()
-        cv2.circle(image, (position[1], position[0]), 7, (255, 127, 255), 3)
-    cv2.putText(image, f"Color BGR = {bgr_color}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255))
-    cv2.putText(image, f"Color HSV = {hsv_color}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255))
-    cv2.imshow("Camera", image)
+    mask1 = createMask(lower, higher)
+
+    contours1, _ = cv2.findContours(mask1, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    x1 = 0
+
+    if len(contours1) > 0:
+        c = max(contours1, key=cv2.contourArea)
+        (x1, y1), radius = cv2.minEnclosingCircle(c)
+        if radius > 10:
+            cv2.circle(frame, (int(x1), int(y1)), int(radius), (0, 255, 255), 2)
+
+    mask2 = createMask(lower1, higher1)
+
+    contours2, _ = cv2.findContours(mask2, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    x2 = 0
+
+    if len(contours2) > 0:
+        c = max(contours2, key=cv2.contourArea)
+        (x2, y2), radius = cv2.minEnclosingCircle(c)
+        if radius > 10:
+            cv2.circle(frame, (int(x2), int(y2)), int(radius), (0, 255, 255), 2)
+
+    mask3 = createMask(lower2, higher2)
+    contours3, _ = cv2.findContours(mask3, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    x3 = 0
+
+    if len(contours3) > 0:
+        c = max(contours3, key=cv2.contourArea)
+        (x3, y3), radius = cv2.minEnclosingCircle(c)
+        if radius > 10:
+            cv2.circle(frame, (int(x3), int(y3)), int(radius), (0, 255, 255), 2)
+
+    comp = "red, green, blue"
+
+    rgb = []
+
+    if x1 > x2 and x3 > x1 and x2 * x1 * x3 != 0:
+        rgb = [3, 1, 2]
+    # red, green, blue
+    elif x2 > x1 and x1 > x3 and x2 * x1 * x3 != 0:
+        rgb = [2, 1, 3]
+    # blue, green, red
+    elif x1 < x3 and x2 > x3 and x2 * x1 * x3 != 0:
+        rgb = [1, 2, 3]
+    # blue, red, green
+    elif x1 < x2 and x3 > x2 and x2 * x1 * x3 != 0:
+        rgb = [1, 3, 2]
+    # green, blue, red
+    elif x2 < x1 and x2 > x3 and x2 * x1 * x3 != 0:
+        rgb = [2, 1, 3]
+    # red, green, blue
+    elif x2 < x3 and x3 < x1 and x2 * x1 * x3 != 0:
+        rgb = [3, 2, 1]
+
+    print(rggb[rgbComp[0]], rggb[rgbComp[1]], rggb[rgbComp[2]])
+
+    if len(rgb) != 0 and rgbComp[0] == rgb[0] and rgbComp[1] == rgb[1] and rgbComp[2] == rgb[2]:
+        randNum = [1, 2, 3]
+        rgbComp = []
+        rgbComp.append(random.choice(randNum))
+        randNum.remove(rgbComp[0])
+        rgbComp.append(random.choice(randNum))
+        randNum.remove(rgbComp[1])
+        rgbComp.append(random.choice(randNum))
+        print("Вы угадали")
+        sleep(2)
+
     key = cv2.waitKey(1)
     if key == ord('q'):
         break
+
+    cv2.imshow("Camera", frame)
 
 cam.release()
 cv2.destroyAllWindows()
